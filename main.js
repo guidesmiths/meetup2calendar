@@ -1,29 +1,42 @@
 const axios = require('axios');
 const { google } = require('googleapis');
+const { authorize, listLabels } = require('./login')();
 
-// get the list of my next events
+// get the list of the next events in a group
+
 const options = {
   groups: ['madridjs', 'ironhack-madrid']
-}
+};
 
 const composeEvent = (event) => ({
   id: event.id,
   name: event.name,
   link: event.link,
   description: event.description,
-})
+});
 
-const getUpcomingEvents = ({ groups }) => new Promise ((resolve, reject) => groups.forEach(
+let auth = authorize()
+  .then((auth) => {
+    getUpcomingEvents(options)
+    .then((events) => createApointment(auth, events))
+  })
+  .catch((err) => console.log('err', err));
+
+
+const getUpcomingEvents = ({ groups }, auth) => new Promise ((resolve, reject) => groups.forEach(
   (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
   .then(({ data: events }) => {
-    resolve(events.map(composeEvent));
-  }).catch(reject)
+    return resolve(events.map(composeEvent));
+  })
+  .catch(reject)
 ))
 
-const createApointment = (events) => {
-  const calendar = google.calendar('v3');
+const createApointment = (auth, events) => {
+  console.log('auth ', auth);
+  const calendar = google.calendar({version: 'v3', auth});
+  let event = events[0]; //temp
 
-  var event = {
+  event = {
     'summary': 'Google I/O 2015',
     'location': '800 Howard St., San Francisco, CA 94103',
     'description': 'A chance to hear more about Google\'s developer products.',
@@ -51,8 +64,9 @@ const createApointment = (events) => {
     },
   };
 
+  console.log('calendar');
+
   calendar.events.insert({
-    auth: 'secret',
     calendarId: 'primary',
     resource: event,
   }, function(err, event) {
@@ -64,8 +78,6 @@ const createApointment = (events) => {
   });
 }
 
-// create a calendar apointment in google calendar
+// defdfvcreate a calendar apointment in google calendar
 
-getUpcomingEvents(options)
-  .then(() => createApointment())
-  .catch(err => console.log(err))
+console.log(getUpcomingEvents(options));
