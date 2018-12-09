@@ -15,13 +15,11 @@ const composeEvent = (event) => ({
   description: event.description,
 });
 
-let auth = authorize()
-  .then((auth) => {
-    getUpcomingEvents(options)
-    .then((events) => createApointment(auth, events))
-  })
-  .catch((err) => console.log('err', err));
-
+const googleOptions = {
+  client_id: process.env.CLIENT_ID,
+  client_secret: process.env.CLIENT_SECRET,
+  redirect_uri: 'http://localhost',
+}
 
 const getUpcomingEvents = ({ groups }, auth) => new Promise ((resolve, reject) => groups.forEach(
   (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
@@ -78,6 +76,9 @@ const createApointment = (auth, events) => {
   });
 }
 
-// defdfvcreate a calendar apointment in google calendar
-
-console.log(getUpcomingEvents(options));
+authorize(googleOptions)
+  .then((auth) => {
+    getUpcomingEvents(options)
+    .then((events) => createApointment(auth, events))
+  })
+  .catch((err) => console.log('err', err));

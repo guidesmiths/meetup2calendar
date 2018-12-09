@@ -21,11 +21,7 @@ module.exports = () => {
     });
   });
 
-  async function authorize() {
-    const client_id = process.env.CLIENT_ID;
-    const client_secret = process.env.CLIENT_SECRET;
-    const redirect_uri = 'http://localhost';
-
+  async function authorize({ client_id, client_secret, redirect_uri }) {
     const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
     let token = '' ;
 
@@ -55,26 +51,7 @@ module.exports = () => {
     });
   }
 
-  function listLabels(auth) {
-    const gmail = google.gmail({version: 'v1', auth});
-    gmail.users.labels.list({
-      userId: 'me',
-    }, (err, res) => {
-      if (err) return console.log('The API returned an error: ' + err);
-      const labels = res.data.labels;
-      if (labels.length) {
-        console.log('Labels:');
-        labels.forEach((label) => {
-          console.log(`- ${label.name}`);
-        });
-      } else {
-        console.log('No labels found.');
-      }
-    });
-  }
-
   return {
-   authorize,
-   listLabels
+   authorize
   }
 }
