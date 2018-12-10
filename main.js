@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { google } = require('googleapis');
-const { authorize, listLabels } = require('./login')();
+const { authorize, listEvents } = require('./login')();
 
 // get the list of the next events in a group
 
@@ -30,8 +30,9 @@ const getUpcomingEvents = ({ groups }, auth) => new Promise ((resolve, reject) =
 ))
 
 const createApointment = (auth, events) => {
-  console.log('auth ', auth);
   const calendar = google.calendar({version: 'v3', auth});
+  console.log('calendar ', calendar.events);
+  console.log('calendar ', calendar.calendarList.list());
   let event = events[0]; //temp
 
   event = {
@@ -39,11 +40,11 @@ const createApointment = (auth, events) => {
     'location': '800 Howard St., San Francisco, CA 94103',
     'description': 'A chance to hear more about Google\'s developer products.',
     'start': {
-      'dateTime': '2015-05-28T09:00:00-07:00',
+      'dateTime': '2018-12-10T09:00:00-07:00',
       'timeZone': 'America/Los_Angeles',
     },
     'end': {
-      'dateTime': '2015-05-28T17:00:00-07:00',
+      'dateTime': '2018-12-10T17:00:00-07:00',
       'timeZone': 'America/Los_Angeles',
     },
     'recurrence': [
@@ -62,10 +63,8 @@ const createApointment = (auth, events) => {
     },
   };
 
-  console.log('calendar');
-
   calendar.events.insert({
-    calendarId: 'primary',
+    calendarId: 'Familia',
     resource: event,
   }, function(err, event) {
     if (err) {
@@ -78,7 +77,7 @@ const createApointment = (auth, events) => {
 
 authorize(googleOptions)
   .then((auth) => {
-    getUpcomingEvents(options)
-    .then((events) => createApointment(auth, events))
+     // createApointment(auth, events)
+      listEvents(auth);
   })
   .catch((err) => console.log('err', err));
