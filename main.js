@@ -1,11 +1,15 @@
 const axios = require('axios');
 const { google } = require('googleapis');
-const { authorize, listEvents } = require('./login')();
+const { authorize, addEvent } = require('./login')();
 
 // get the list of the next events in a group
 
 const options = {
-  groups: ['madridjs', 'ironhack-madrid']
+  groups: [
+    'madridjs',
+    'ironhack-madrid',
+    'Smart-devices-for-Home-Madrid'
+  ]
 };
 
 const composeEvent = (event) => ({
@@ -21,18 +25,22 @@ const googleOptions = {
   redirect_uri: 'http://localhost',
 }
 
-const getUpcomingEvents = ({ groups }, auth) => new Promise ((resolve, reject) => groups.forEach(
-  (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
-  .then(({ data: events }) => {
-    return resolve(events.map(composeEvent));
-  })
-  .catch(reject)
-))
+let eventsList = [];
+
+// const getUpcomingEvents = ({ groups }, auth) => groups.map(
+//   (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
+//   .then(({ data: events }) => events.map(composeEvent))
+// )
+
+
+//  const getUpcomingEvents = async ({ groups }, auth) => groups.forEach(
+//    await (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
+//   .then(({ data: events }) => events.map(composeEvent))
+// )
+
 
 const createApointment = (auth, events) => {
   const calendar = google.calendar({version: 'v3', auth});
-  console.log('calendar ', calendar.events);
-  console.log('calendar ', calendar.calendarList.list());
   let event = events[0]; //temp
 
   event = {
@@ -75,9 +83,22 @@ const createApointment = (auth, events) => {
   });
 }
 
-authorize(googleOptions)
-  .then((auth) => {
-     // createApointment(auth, events)
-      listEvents(auth);
+let currentEvent = '';
+options.groups.forEach(
+ (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
+  .then(
+    ({ data: events }) => {
+      events.map((event) => {
+        currentEvent = composeEvent(event);
+        console.log(currentEvent);
+        return currentEvent;
+      })
+      .forEach(() =>
+        authorize(googleOptions)
+          .then((auth) => {
+            addEvent(auth, currentEvent);
+          })
+          .catch((err) => console.log('err', err))
+      )
   })
-  .catch((err) => console.log('err', err));
+)
