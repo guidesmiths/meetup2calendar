@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { google } = require('googleapis');
-const { authorize, addEvent } = require('./login')();
+const { authorize, addEvent } = require('./calendar')();
 
 // get the list of the next events in a group
 
