@@ -57,7 +57,7 @@ module.exports = () => {
   }
 
   function addEvent(authorize, event) {
-
+    console.log('I am goint to add a new event', event);
   }
 
   return {
