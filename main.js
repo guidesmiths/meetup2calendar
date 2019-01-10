@@ -1,6 +1,6 @@
 const axios = require('axios');
-const { google } = require('googleapis');
-const { authorize, addEvent } = require('./calendar')();
+const moment = require('moment');
+const { authorize, addEvent, listEvents } = require('./calendar')();
 
 // get the list of the next events in a group
 
@@ -12,11 +12,22 @@ const options = {
   ]
 };
 
+const getFullAddress = (event) => {
+  console.log('venue ' , event.venue)
+   let address =`${'address_1' in event.venue ? event.venue.address_1 : ''} ${event.venue.city} ${event.venue.localized_country_name}`
+   return address;
+}
+
 const composeEvent = (event) => ({
   id: event.id,
   name: event.name,
   link: event.link,
   description: event.description,
+  local_date_start: new Date(`${event.local_date}T${event.local_time}:00`),
+  local_date_end: moment(new Date(`${event.local_date}T${event.local_time}:00`)).add(2, 'HOURS'),
+  city: 'Madrid',
+  timezone: event.group.timezone,
+  address: getFullAddress(event)
 });
 
 const googleOptions = {
@@ -25,80 +36,21 @@ const googleOptions = {
   redirect_uri: 'http://localhost',
 }
 
-let eventsList = [];
-
-// const getUpcomingEvents = ({ groups }, auth) => groups.map(
-//   (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
-//   .then(({ data: events }) => events.map(composeEvent))
-// )
-
-
-//  const getUpcomingEvents = async ({ groups }, auth) => groups.forEach(
-//    await (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
-//   .then(({ data: events }) => events.map(composeEvent))
-// )
-
-
-const createApointment = (auth, events) => {
-  const calendar = google.calendar({version: 'v3', auth});
-  let event = events[0]; //temp
-
-  event = {
-    'summary': 'Google I/O 2015',
-    'location': '800 Howard St., San Francisco, CA 94103',
-    'description': 'A chance to hear more about Google\'s developer products.',
-    'start': {
-      'dateTime': '2018-12-10T09:00:00-07:00',
-      'timeZone': 'America/Los_Angeles',
-    },
-    'end': {
-      'dateTime': '2018-12-10T17:00:00-07:00',
-      'timeZone': 'America/Los_Angeles',
-    },
-    'recurrence': [
-      'RRULE:FREQ=DAILY;COUNT=2'
-    ],
-    'attendees': [
-      {'email': 'lpage@example.com'},
-      {'email': 'sbrin@example.com'},
-    ],
-    'reminders': {
-      'useDefault': false,
-      'overrides': [
-        {'method': 'email', 'minutes': 24 * 60},
-        {'method': 'popup', 'minutes': 10},
-      ],
-    },
-  };
-
-  calendar.events.insert({
-    calendarId: 'Familia',
-    resource: event,
-  }, function(err, event) {
-    if (err) {
-      console.log('There was an error contacting the Calendar service: ' + err);
-      return;
-    }
-    console.log('Event created: %s', event.htmlLink);
-  });
-}
 
 let currentEvent = '';
 options.groups.forEach(
  (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
   .then(
     ({ data: events }) => {
+      console.log('events ', events);
       events.map((event) => {
-        currentEvent = composeEvent(event);
-        console.log(currentEvent);
+       // currentEvent = composeEvent(event);
+        authorize(googleOptions)
+        .then((auth) => {
+          //addEvent(auth, currentEvent);
+          //listEvents(auth);
+        })
         return currentEvent;
       })
-      .forEach(() =>
-        authorize(googleOptions)
-          .then((auth) => {
-            addEvent(auth, currentEvent);
-          })
-          .catch((err) => console.log('err', err))
-      )
   })
 )
