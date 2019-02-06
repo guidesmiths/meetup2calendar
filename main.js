@@ -13,7 +13,6 @@ const options = {
 };
 
 const getFullAddress = (event) => {
-  console.log('venue ' , event.venue)
    let address =`${'address_1' in event.venue ? event.venue.address_1 : ''} ${event.venue.city} ${event.venue.localized_country_name}`
    return address;
 }
@@ -38,18 +37,19 @@ const googleOptions = {
 
 
 let currentEvent = '';
+let eventsIds = [];
 options.groups.forEach(
  (group) => axios.get(`https://api.meetup.com/${group}/events?&key=${process.env.MEETUP_KEY}&sign=true&photo-host=public&page=20&status=upcoming`)
   .then(
     ({ data: events }) => {
-      console.log('events ', events);
       events.map((event) => {
-       // currentEvent = composeEvent(event);
+        eventsIds.push(event.id);
+        currentEvent = composeEvent(event);
         authorize(googleOptions)
         .then((auth) => {
-          //addEvent(auth, currentEvent);
-          //listEvents(auth);
+          addEvent(auth, currentEvent);
         })
+        console.log(eventsIds);
         return currentEvent;
       })
   })
