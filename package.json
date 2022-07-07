@@ -15,7 +15,7 @@
     "express": "^4.16.4",
     "googleapis": "^35.0.0",
     "jest": "^24.1.0",
-    "moment": "^2.23.0",
+    "moment": "^2.29.4",
     "mysql2": "^1.6.4"
   },
   "devDependencies": {
